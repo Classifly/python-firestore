@@ -44,6 +44,7 @@ from google.cloud.firestore_v1.batch import WriteBatch
 from google.cloud.firestore_v1.client import Client
 from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.document import DocumentReference
+from google.cloud.firestore_v1.property import FirestoreProperty
 from google.cloud.firestore_v1.query import CollectionGroup
 from google.cloud.firestore_v1.query import Query
 from google.cloud.firestore_v1.transaction import Transaction
@@ -56,6 +57,7 @@ from google.cloud.firestore_v1.transforms import Maximum
 from google.cloud.firestore_v1.transforms import Minimum
 from google.cloud.firestore_v1.transforms import SERVER_TIMESTAMP
 from google.cloud.firestore_v1.watch import Watch
+
 
 
 # TODO(https://github.com/googleapis/python-firestore/issues/93): this is all on the generated surface. We require this to match
@@ -132,6 +134,7 @@ __all__: List[str] = [
     "LastUpdateOption",
     "Maximum",
     "Minimum",
+    "FirestoreProperty",
     "Query",
     "ReadAfterWriteError",
     "SERVER_TIMESTAMP",
