@@ -359,12 +359,15 @@ class DocumentReference(BaseDocumentReference):
 
         return commit_response.commit_time
 
+    _document_snapshot: DocumentSnapshot = None
+
     def get(
         self,
         field_paths: Iterable[str] = None,
         transaction=None,
         retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
+        reload: bool = False
     ) -> DocumentSnapshot:
         """Retrieve a snapshot of the current document.
 
@@ -387,6 +390,7 @@ class DocumentReference(BaseDocumentReference):
                 should be retried.  Defaults to a system-specified policy.
             timeout (float): The timeout for this request.  Defaults to a
                 system-specified value.
+            reload  (bool): Whether or not to get a cached Document Snapshot
 
         Returns:
             :class:`~google.cloud.firestore_v1.base_document.DocumentSnapshot`:
@@ -396,38 +400,40 @@ class DocumentReference(BaseDocumentReference):
                 :attr:`create_time` attributes will all be ``None`` and
                 its :attr:`exists` attribute will be ``False``.
         """
-        from google.cloud.firestore_v1.base_client import _parse_batch_get
+        if self._document_snapshot is None or reload == True:
+            from google.cloud.firestore_v1.base_client import _parse_batch_get
 
-        request, kwargs = self._prep_batch_get(field_paths, transaction, retry, timeout)
+            request, kwargs = self._prep_batch_get(field_paths, transaction, retry, timeout)
 
-        response_iter = self._client._firestore_api.batch_get_documents(
-            request=request,
-            metadata=self._client._rpc_metadata,
-            **kwargs,
-        )
-
-        get_doc_response = next(response_iter, None)
-
-        if get_doc_response is not None:
-            return _parse_batch_get(
-                get_doc_response=get_doc_response,
-                reference_map={self._document_path: self},
-                client=self._client,
+            response_iter = self._client._firestore_api.batch_get_documents(
+                request=request,
+                metadata=self._client._rpc_metadata,
+                **kwargs,
             )
 
-        logger.warning(
-            "`batch_get_documents` unexpectedly returned empty "
-            "stream. Expected one object.",
-        )
+            get_doc_response = next(response_iter, None)
 
-        return DocumentSnapshot(
-            self,
-            None,
-            exists=False,
-            read_time=_datetime_to_pb_timestamp(datetime.datetime.now()),
-            create_time=None,
-            update_time=None,
-        )
+            if get_doc_response is not None:
+                return _parse_batch_get(
+                    get_doc_response=get_doc_response,
+                    reference_map={self._document_path: self},
+                    client=self._client,
+                )
+
+            logger.warning(
+                "`batch_get_documents` unexpectedly returned empty "
+                "stream. Expected one object.",
+            )
+            self._document_snapshot = DocumentSnapshot(
+                self,
+                None,
+                exists=False,
+                read_time=_datetime_to_pb_timestamp(datetime.datetime.now()),
+                create_time=None,
+                update_time=None,
+            )
+
+        return self._document_snapshot
 
     def collections(
         self,
